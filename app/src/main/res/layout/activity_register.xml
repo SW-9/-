@@ -25,6 +25,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:textColorHint="@color/black"
             android:hint="제목을 입력하세요."
             />
     </LinearLayout>
@@ -42,11 +43,11 @@
             app:srcCompat="@android:drawable/ic_menu_gallery" />
 
         <TextView
-            android:id="@+id/textView2"
+            android:id="@+id/textView"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:textSize="10pt"
-            android:text="썸네일 이미지를 \n등록해주세요" />
+            android:text="썸네일을 \n등록해주세요" />
     </LinearLayout>
 
     <TextView
@@ -62,6 +63,7 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:background="#eeeeee"
+        android:textColorHint="@color/black"
         android:hint="내용을 입력하세요."
         />
 
@@ -72,6 +74,12 @@
         android:text="등록하기"
         android:textColor="#FFFFFF"
         android:background="#C62828"/>
+
+    <Button
+        android:id="@+id/getidx"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="0" />
 
 
 </LinearLayout>

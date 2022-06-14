@@ -37,7 +37,7 @@
         android:ems="10"
         android:inputType="textPersonName"
         android:text=""
-        android:hint="아이디를 입력하세요."
+        android:hint="e-mail를 입력하세요."
         app:layout_constraintBottom_toTopOf="@+id/passwd_et"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"

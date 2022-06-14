@@ -16,22 +16,6 @@ import android.widget.Toast;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.*;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-
-
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.concurrent.ExecutionException;
-
-import javax.net.ssl.HttpsURLConnection;
 
 public class JoinActivity extends AppCompatActivity {
 
@@ -39,7 +23,8 @@ public class JoinActivity extends AppCompatActivity {
     final private String TAG = getClass().getSimpleName();
 
     // 사용할 컴포넌트 선언
-    EditText userid_et, passwd_et;
+    EditText userid_et, passwd_et,test_et;
+    EditText nick_et;
     Button join_button;
 
     //firebase에 연결할 함수
@@ -53,6 +38,7 @@ public class JoinActivity extends AppCompatActivity {
 // 컴포넌트 초기화
         userid_et = findViewById(R.id.userid_et);
         passwd_et = findViewById(R.id.passwd_et);
+        nick_et = findViewById(R.id.nick_et);
         join_button = findViewById(R.id.join_button);
 
         //firebase의 인스턴스 초기화
@@ -65,16 +51,55 @@ public class JoinActivity extends AppCompatActivity {
             public void onClick(View view) {
 // 회원가입 함수 호출
                 String getUserId = userid_et.getText().toString();
+                String getnick= nick_et.getText().toString();
                 String getUserPassword = passwd_et.getText().toString();
-                Toast.makeText(JoinActivity.this, getUserId,
-                        Toast.LENGTH_SHORT).show();
-                createAccount(getUserId,getUserPassword);
+
+                if(getUserId.equals("")) {
+                    Toast.makeText(JoinActivity.this, "이메일을 입력해주세요.", Toast.LENGTH_SHORT).show();
+                }
+                    else if(getnick.equals("")) {
+                    Toast.makeText(JoinActivity.this, "닉네임을 입력해주세요.", Toast.LENGTH_SHORT).show();
+                }
+                else if(getUserPassword.equals("")) {
+                    Toast.makeText(JoinActivity.this, "비밀번호를 입력해주세요.", Toast.LENGTH_SHORT).show();
+                }
+                else if(passwordcheck()==false){
+                    Toast.makeText(JoinActivity.this, "비밀번호가 일치하지 않습니다.", Toast.LENGTH_SHORT).show();
+
+                }
+                else{
+                    mAuth = FirebaseAuth.getInstance();
+                    UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                            .setDisplayName(getnick)
+                            .build();
+
+                    mAuth.getCurrentUser().updateProfile(profileUpdates)
+                            .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    if (task.isSuccessful()) {
+                                        Log.d(TAG, "User profile updated.");
+                                    }
+                                }
+                            });
+
+
+                    createAccount(getUserId, getUserPassword);
+
+                }
 
             }
             });
 
         }
 
+
+    private boolean passwordcheck(){
+        if(passwd_et.getText().toString().equals(test_et.getText().toString())){
+            return true;
+        }
+        else return false;
+    }
 
     private void createAccount(String email, String password) {
         // [START create_user_with_email]
@@ -85,18 +110,21 @@ public class JoinActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             FirebaseUser user = mAuth.getCurrentUser();
                             String email = user.getEmail();
-                            String uid = user.getUid();
+                            String uid = nick_et.getText().toString();
 
-                            //해쉬맵 테이블을 파이어베이스 데이터베이스에 저장
-                            HashMap<Object,String> hashMap = new HashMap<>();
 
-                            hashMap.put("uid",uid);
-                            hashMap.put("email",email);
 
-                            FirebaseDatabase database = FirebaseDatabase.getInstance();
-                            DatabaseReference reference = database.getReference("Users");
-                            reference.child(uid).setValue(hashMap);
-
+                            UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                                    .setDisplayName(uid)
+                                    .build();
+                            user.updateProfile(profileUpdates)
+                                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<Void> task) {
+                                            if (task.isSuccessful()) {
+                                            }
+                                        }
+                                    });
 
                             //가입이 이루어져을시 가입 화면을 빠져나감.
                             Intent intent = new Intent(JoinActivity.this, LoginActivity.class);
@@ -104,17 +132,12 @@ public class JoinActivity extends AppCompatActivity {
                             finish();
                             Toast.makeText(JoinActivity.this, "회원가입에 성공하셨습니다.", Toast.LENGTH_SHORT).show();
                         } else {
-                            // If sign in fails, display a message to the user.
-                            Log.w(TAG, "createUserWithEmail:failure", task.getException());
-                        //    Toast.makeText(JoinActivity.this, "Authentication failed.",
-                         //           Toast.LENGTH_SHORT).show();
-                            updateUI(null);
+                            Toast.makeText(JoinActivity.this, "회원가입에 실패하셨습니다.", Toast.LENGTH_SHORT).show();
+
+
                         }
                     }
                 });
-        // [END create_user_with_email]
-    }
-    private void updateUI(FirebaseUser user) {
 
     }
     }

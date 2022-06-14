@@ -35,6 +35,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="제목입니다."
+                    android:textColor="@color/black"
                     />
             </LinearLayout>
             <LinearLayout
@@ -46,16 +47,17 @@
                     android:layout_width="100dp"
                     android:layout_height="wrap_content"
                     android:padding="16dp"
-                    android:text="작성일"/>
+                    android:text="작성자"/>
 
                 <TextView
-                    android:id="@+id/date_tv"
+                    android:id="@+id/user_tv"
                     android:padding="16dp"
                     android:background="#eeeeee"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="제목입니다."
+                    android:text="글 작성자명"
+                    android:textColor="@color/black"
                     />
             </LinearLayout>
             <TextView
@@ -71,6 +73,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="내용입니다."
+                android:textColor="@color/black"
                 />
 
             <TextView
@@ -86,6 +89,12 @@
                 android:layout_height="wrap_content"
                 android:padding="8dp"
                 android:orientation="vertical"/>
+
+            <TextView
+                android:id="@+id/getidx"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="0" />
         </LinearLayout>
     </ScrollView>
     <LinearLayout

@@ -1,5 +1,6 @@
 package osp.smgonggu.myapplication;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
@@ -12,24 +13,19 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.Toast;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreSettings;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 
-import javax.net.ssl.HttpsURLConnection;
 
-public class ListActivity extends AppCompatActivity {
+public class ListActivity extends AppCompatActivity{
 
     // 로그에 사용할 TAG 변수
     final private String TAG = getClass().getSimpleName();
@@ -37,22 +33,47 @@ public class ListActivity extends AppCompatActivity {
     // 사용할 컴포넌트 선언
     ListView listView;
     Button reg_button;
-    String userid = "taegi";
 
+    FirebaseAuth mAuth;
+
+    private FirebaseFirestore db;
     // 리스트뷰에 사용할 제목 배열
     ArrayList<String> titleList = new ArrayList<>();
 
     // 클릭했을 때 어떤 게시물을 클릭했는지 게시물 번호를 담기 위한 배열
     ArrayList<String> seqList = new ArrayList<>();
 
-    @Override
+    String name;
+    String email;
+    String seq;
+   @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list);
 
-// LoginActivity 에서 넘긴 userid 값 받기
-       // userid = getIntent().getStringExtra("userid");
 
+        mAuth = FirebaseAuth.getInstance();
+        db= FirebaseFirestore.getInstance();
+       FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
+               .setPersistenceEnabled(true)
+               .build();
+       db.setFirestoreSettings(settings);
+
+
+        //현재 로그인한 유저의 정보 가져오기
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        //만약에 현재 로그인이 된 상태라면
+        if (user != null) {
+            // Name, email address, and profile photo Url
+           name = user.getDisplayName();
+           email = user.getEmail();
+
+            // Check if user's email is verified
+
+            // The user's ID, unique to the Firebase project. Do NOT use this value to
+            // authenticate with your backend server, if you have one. Use
+            // FirebaseUser.getIdToken() instead.
+        }
 // 컴포넌트 초기화
         listView = findViewById(R.id.listView);
 
@@ -61,13 +82,11 @@ public class ListActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
 
-// 어떤 값을 선택했는지 토스트를 뿌려줌
-                Toast.makeText(ListActivity.this, adapterView.getItemAtPosition(i)+ " 클릭", Toast.LENGTH_SHORT).show();
 
 // 게시물의 번호와 userid를 가지고 DetailActivity 로 이동
                 Intent intent = new Intent(ListActivity.this, DetailActivity.class);
                 intent.putExtra("board_seq", seqList.get(i));
-                intent.putExtra("userid", userid);
+                intent.putExtra("title", titleList.get(i));
                 startActivity(intent);
 
             }
@@ -83,7 +102,7 @@ public class ListActivity extends AppCompatActivity {
 
 // userid 를 가지고 RegisterActivity 로 이동
                 Intent intent = new Intent(ListActivity.this, RegisterActivity.class);
-                intent.putExtra("userid", userid);
+                intent.putExtra("userid", name);
                 startActivity(intent);
             }
         });
@@ -95,119 +114,35 @@ public class ListActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 // 해당 액티비티가 활성화 될 때, 게시물 리스트를 불러오는 함수를 호출
-        GetBoard getBoard = new GetBoard();
-        getBoard.execute();
+        getBoard();
     }
 
-
-    // 게시물 리스트를 읽어오는 함수
-    class GetBoard extends AsyncTask<String, Void, String> {
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-            Log.d(TAG, "onPreExecute");
-        }
-
-
-        @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-            Log.d(TAG, "onPostExecute, " + result);
-
-// 배열들 초기화
-            titleList.clear();
-            seqList.clear();
-
-            try {
-
-// 결과물이 JSONArray 형태로 넘어오기 때문에 파싱
-            /*    JSONArray jsonArray = new JSONArray(result);
-
-                for(int i=0;i<jsonArray.length();i++){
-                    JSONObject jsonObject = jsonArray.getJSONObject(i);
-
-                    String title = jsonObject.optString("title");
-                    String seq = jsonObject.optString("seq");
-*/
-                for(int i=0;i<2;i++){//여기야
-                String title = "안녕하세요";
-                String seq = "";
-// title, seq 값을 변수로 받아서 배열에 추가
-                    titleList.add(title);
-                    seqList.add(seq);
-
-                }
-
-// ListView 에서 사용할 arrayAdapter를 생성하고, ListView 와 연결
-                ArrayAdapter arrayAdapter = new ArrayAdapter<String>(ListActivity.this, android.R.layout.simple_list_item_1, titleList);
-                listView.setAdapter(arrayAdapter);
-
-// arrayAdapter의 데이터가 변경되었을때 새로고침
-                arrayAdapter.notifyDataSetChanged();
-
-            } //catch (JSONException e) {
-            catch(Exception e){
-                e.printStackTrace();
-            }
+    //게시물 불러오는 함수
+    public void getBoard(){
+        db.collection("Board")
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if (task.isSuccessful()) {
+                            titleList.clear();
+                            seqList.clear();
+                            for (QueryDocumentSnapshot document : task.getResult()) {
 
 
-        }
-
-
-        @Override
-        protected String doInBackground(String... params) {
-//
-// String userid = params[0];
-// String passwd = params[1];
-
-            String server_url = "http://15.164.252.136/load_board.php";
-
-
-            URL url;
-            String response = "";
-            try {
-                url = new URL(server_url);
-
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setReadTimeout(15000);
-                conn.setConnectTimeout(15000);
-                conn.setRequestMethod("POST");
-                conn.setDoInput(true);
-                conn.setDoOutput(true);
-                Uri.Builder builder = new Uri.Builder()
-                        .appendQueryParameter("userid", "");
-// .appendQueryParameter("passwd", passwd);
-                String query = builder.build().getEncodedQuery();
-
-                OutputStream os = conn.getOutputStream();
-                BufferedWriter writer = new BufferedWriter(
-                        new OutputStreamWriter(os, "UTF-8"));
-                writer.write(query);
-                writer.flush();
-                writer.close();
-                os.close();
-
-                conn.connect();
-                int responseCode=conn.getResponseCode();
-
-                if (responseCode == HttpsURLConnection.HTTP_OK) {
-                    String line;
-                    BufferedReader br=new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                    while ((line=br.readLine()) != null) {
-                        response+=line;
+                                    String title = document.get("title").toString();
+                                    String uid = document.get("uid").toString();
+                                    seq = document.get("index").toString();
+                                    titleList.add(title);
+                                    seqList.add(seq);
+                                    ArrayAdapter arrayAdapter = new ArrayAdapter<String>(ListActivity.this, android.R.layout.simple_list_item_1, titleList);
+                                    listView.setAdapter(arrayAdapter);
+                            }
+                        }
                     }
-                }
-                else {
-                    response="";
+                });
 
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            return response;
-        }
     }
+
+
 }

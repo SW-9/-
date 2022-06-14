@@ -16,6 +16,9 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    buildFeatures {
+        viewBinding = true
+    }
     buildTypes {
         release {
             minifyEnabled false
@@ -60,8 +63,11 @@ dependencies {
     implementation 'com.google.firebase:firebase-auth'
     implementation 'com.google.firebase:firebase-firestore'
 
+    //파이어베이스 저장소(게시물을 쓰기위한 저장소)
+    implementation 'com.google.firebase:firebase-storage'
 
     //구글로그인 구현을 위한 implemetation
     implementation 'com.google.android.gms:play-services-auth:17.0.0'
 
+    implementation 'com.google.firebase:firebase-database'
 }
